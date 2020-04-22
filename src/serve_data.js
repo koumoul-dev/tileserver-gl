@@ -8,7 +8,8 @@ var clone = require('clone'),
     express = require('express'),
     mbtiles = require('@mapbox/mbtiles'),
     pbf = require('pbf'),
-    VectorTile = require('@mapbox/vector-tile').VectorTile;
+    VectorTile = require('@mapbox/vector-tile').VectorTile,
+    vtpbf = require('vt-pbf')
 
 var tileshrinkGl;
 try {
@@ -132,6 +133,37 @@ module.exports = function(options, repo, params, id, styles, publicUrl) {
                 isGzipped = false;
               }
               data = options.dataDecoratorFunc(id, 'data', data, z, x, y);
+            }
+
+            // Custom select of layers and properties in layers
+            if (req.query.layers || req.query.properties) {
+              if (isGzipped) {
+                data = zlib.unzipSync(data);
+                isGzipped = false;
+              }
+              var tile = new VectorTile(new pbf(data));
+              const layers = req.query.layers && req.query.layers.split(',')
+              const properties = req.query.properties && req.query.properties.split(',')
+              for (var layerName in tile.layers) {
+                if (layers && !layers.includes(layerName)) {
+                  delete tile.layers[layerName]
+                } else {
+                  if (properties) {
+                  var layer = tile.layers[layerName];
+                  const updatedFeatures = []
+                  for (var i = 0; i < layer.length; i++) {
+                    var feature = layer.feature(i);
+                    for (const key of Object.keys(feature.properties)) {
+                      if (!properties.includes(key)) delete feature.properties[key]
+                    }
+                    updatedFeatures.push(feature)
+                  }
+                  // monkey patch layer.feature() so that it doesn't reprocess the pbf on next call
+                  layer.feature = (i) => updatedFeatures[i]
+                }
+                }
+              }
+              data = Buffer.from(vtpbf(tile))
             }
           }
           if (format == 'pbf') {

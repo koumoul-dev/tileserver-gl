@@ -1,7 +1,7 @@
 process.env.NODE_ENV = 'test';
 
 global.should = require('should');
-global.supertest = require('supertest');
+global.supertest = require('supertest')
 
 before(function() {
   console.log('global setup');
