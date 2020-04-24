@@ -69,7 +69,7 @@ module.exports = {
                 data = zlib.unzipSync(data);
                 isGzipped = false;
               }
-              var tile = new VectorTile(new pbf(data));
+              var tile = new VectorTile(new Pbf(data));
               const layers = req.query.layers && req.query.layers.split(',')
               const properties = req.query.properties && req.query.properties.split(',')
               for (var layerName in tile.layers) {
