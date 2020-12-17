@@ -56,6 +56,8 @@ module.exports = function(options, repo, params, id, styles, publicUrl) {
         delete tileJSON['filesize'];
         delete tileJSON['mtime'];
         delete tileJSON['scheme'];
+        delete tileJSON['generator_options'];
+        delete tileJSON['tilestats'];
 
         Object.assign(tileJSON, params.tilejson || {});
         utils.fixTileJSONCenter(tileJSON);
